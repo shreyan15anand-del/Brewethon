@@ -35,6 +35,9 @@ const ClubRep = require('./models/ClubRep');
 const Assignment = require('./models/Assignment');
 const Circular = require('./models/Circular');
 const ExamSchedule = require('./models/ExamSchedule');
+const Event = require('./models/Event');
+const ClubAnnouncement = require('./models/ClubAnnouncement');
+const ClubMember = require('./models/ClubMember');
 
 // Seed base admin on server start
 async function seedBaseAdmin() {
@@ -76,7 +79,7 @@ app.get('/college', (req, res) => {
 });
 
 app.get('/club-rep', (req, res) => {
-  res.render('clubreplogin', { userRole: 'Club Representative' });
+  res.render('clubreplogin', { userRole: 'Club Representative', errorMessage: null });
 });
 
 app.get('/admin', (req, res) => {
@@ -500,6 +503,255 @@ app.post('/teacher/dashboard/delete-exam', async (req, res) => {
 
 // Teacher logout
 app.post('/teacher/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) console.error('Session destroy error:', err);
+    res.clearCookie('connect.sid');
+    return res.redirect('/');
+  });
+});
+
+// Club Rep login handler
+app.post('/club-rep/login', async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) {
+    return res.render('clubreplogin', { errorMessage: 'Email and password required' });
+  }
+  try {
+    const clubRep = await ClubRep.findOne({ email: email.toLowerCase() });
+    if (!clubRep) {
+      return res.render('clubreplogin', { errorMessage: 'Invalid email or password' });
+    }
+    const match = await clubRep.comparePassword(password);
+    if (!match) {
+      return res.render('clubreplogin', { errorMessage: 'Invalid email or password' });
+    }
+    // Set session and redirect to club rep dashboard
+    req.session.isClubRep = true;
+    req.session.clubRepId = clubRep._id.toString();
+    req.session.clubRepName = clubRep.name;
+    req.session.clubName = clubRep.clubName;
+    req.session.collegeId = clubRep.collegeId.toString();
+    return res.redirect('/club-rep/dashboard');
+  } catch (err) {
+    console.error(err);
+    return res.render('clubreplogin', { errorMessage: 'Server error' });
+  }
+});
+
+// Club Rep dashboard
+app.get('/club-rep/dashboard', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  try {
+    const clubRepId = req.session.clubRepId;
+    const clubRepName = req.session.clubRepName;
+    const clubName = req.session.clubName;
+    const events = await Event.find({ clubRepId }).sort({ eventDate: 1 });
+    const members = await ClubMember.find({ clubRepId }).sort({ createdAt: -1 });
+    const announcements = await ClubAnnouncement.find({ clubRepId }).sort({ isPinned: -1, createdAt: -1 });
+    
+    res.render('club-rep-dashboard', {
+      clubRepName,
+      clubName,
+      events,
+      members,
+      announcements,
+      totalEvents: events.length,
+      totalMembers: members.length,
+      totalAnnouncements: announcements.length,
+      successMessage: req.query.success,
+      errorMessage: req.query.error
+    });
+  } catch (err) {
+    console.error('Error fetching club rep dashboard:', err);
+    res.status(500).send('Error loading dashboard');
+  }
+});
+
+// POST: Add new event
+app.post('/club-rep/dashboard/add-event', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { eventName, description, eventDate, eventTime, location, capacity, eventType } = req.body || {};
+  if (!eventName || !description || !eventDate || !eventTime || !location) {
+    return res.redirect('/club-rep/dashboard?error=All required fields must be filled');
+  }
+  try {
+    const clubRepId = req.session.clubRepId;
+    const collegeId = req.session.collegeId;
+    const newEvent = new Event({
+      clubRepId,
+      collegeId,
+      eventName,
+      description,
+      eventDate,
+      eventTime,
+      location,
+      capacity: capacity || null,
+      eventType: eventType || 'meetup'
+    });
+    await newEvent.save();
+    res.redirect('/club-rep/dashboard?success=Event created successfully');
+  } catch (err) {
+    console.error('Error adding event:', err);
+    res.redirect('/club-rep/dashboard?error=Error creating event');
+  }
+});
+
+// POST: Add new member
+app.post('/club-rep/dashboard/add-member', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { name, email, phoneNumber, rollNumber, department, role } = req.body || {};
+  if (!name || !email) {
+    return res.redirect('/club-rep/dashboard?error=Name and email are required');
+  }
+  try {
+    const clubRepId = req.session.clubRepId;
+    const collegeId = req.session.collegeId;
+    const existingMember = await ClubMember.findOne({ email: email.toLowerCase(), clubRepId });
+    if (existingMember) {
+      return res.redirect('/club-rep/dashboard?error=Member email already exists in this club');
+    }
+    const newMember = new ClubMember({
+      clubRepId,
+      collegeId,
+      name,
+      email,
+      phoneNumber,
+      rollNumber,
+      department,
+      role: role || 'member'
+    });
+    await newMember.save();
+    res.redirect('/club-rep/dashboard?success=Member added successfully');
+  } catch (err) {
+    console.error('Error adding member:', err);
+    res.redirect('/club-rep/dashboard?error=Error adding member');
+  }
+});
+
+// POST: Add announcement
+app.post('/club-rep/dashboard/add-announcement', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { title, content, category, isPinned } = req.body || {};
+  if (!title || !content) {
+    return res.redirect('/club-rep/dashboard?error=Title and content are required');
+  }
+  try {
+    const clubRepId = req.session.clubRepId;
+    const collegeId = req.session.collegeId;
+    const newAnnouncement = new ClubAnnouncement({
+      clubRepId,
+      collegeId,
+      title,
+      content,
+      category: category || 'update',
+      isPinned: isPinned === 'on' || isPinned === true
+    });
+    await newAnnouncement.save();
+    res.redirect('/club-rep/dashboard?success=Announcement posted successfully');
+  } catch (err) {
+    console.error('Error adding announcement:', err);
+    res.redirect('/club-rep/dashboard?error=Error posting announcement');
+  }
+});
+
+// POST: Update event status
+app.post('/club-rep/dashboard/update-event-status', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { eventId, status } = req.body || {};
+  if (!eventId || !status) {
+    return res.redirect('/club-rep/dashboard?error=Invalid request');
+  }
+  try {
+    const event = await Event.findById(eventId);
+    if (event && event.clubRepId.toString() !== req.session.clubRepId) {
+      return res.redirect('/club-rep/dashboard?error=Unauthorized action');
+    }
+    await Event.findByIdAndUpdate(eventId, { status });
+    res.redirect('/club-rep/dashboard?success=Event status updated');
+  } catch (err) {
+    console.error('Error updating event:', err);
+    res.redirect('/club-rep/dashboard?error=Error updating event');
+  }
+});
+
+// POST: Delete event
+app.post('/club-rep/dashboard/delete-event', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { eventId } = req.body || {};
+  if (!eventId) {
+    return res.redirect('/club-rep/dashboard?error=Invalid event ID');
+  }
+  try {
+    const event = await Event.findById(eventId);
+    if (event && event.clubRepId.toString() !== req.session.clubRepId) {
+      return res.redirect('/club-rep/dashboard?error=Unauthorized action');
+    }
+    await Event.findByIdAndDelete(eventId);
+    res.redirect('/club-rep/dashboard?success=Event deleted successfully');
+  } catch (err) {
+    console.error('Error deleting event:', err);
+    res.redirect('/club-rep/dashboard?error=Error deleting event');
+  }
+});
+
+// POST: Delete member
+app.post('/club-rep/dashboard/delete-member', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { memberId } = req.body || {};
+  if (!memberId) {
+    return res.redirect('/club-rep/dashboard?error=Invalid member ID');
+  }
+  try {
+    const member = await ClubMember.findById(memberId);
+    if (member && member.clubRepId.toString() !== req.session.clubRepId) {
+      return res.redirect('/club-rep/dashboard?error=Unauthorized action');
+    }
+    await ClubMember.findByIdAndDelete(memberId);
+    res.redirect('/club-rep/dashboard?success=Member removed successfully');
+  } catch (err) {
+    console.error('Error deleting member:', err);
+    res.redirect('/club-rep/dashboard?error=Error removing member');
+  }
+});
+
+// POST: Delete announcement
+app.post('/club-rep/dashboard/delete-announcement', async (req, res) => {
+  if (!req.session || !req.session.isClubRep) {
+    return res.redirect('/club-rep');
+  }
+  const { announcementId } = req.body || {};
+  if (!announcementId) {
+    return res.redirect('/club-rep/dashboard?error=Invalid announcement ID');
+  }
+  try {
+    const announcement = await ClubAnnouncement.findById(announcementId);
+    if (announcement && announcement.clubRepId.toString() !== req.session.clubRepId) {
+      return res.redirect('/club-rep/dashboard?error=Unauthorized action');
+    }
+    await ClubAnnouncement.findByIdAndDelete(announcementId);
+    res.redirect('/club-rep/dashboard?success=Announcement deleted successfully');
+  } catch (err) {
+    console.error('Error deleting announcement:', err);
+    res.redirect('/club-rep/dashboard?error=Error deleting announcement');
+  }
+});
+
+// Club Rep logout
+app.post('/club-rep/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) console.error('Session destroy error:', err);
     res.clearCookie('connect.sid');
