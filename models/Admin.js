@@ -6,8 +6,11 @@ const AdminSchema = new mongoose.Schema({
   password: { type: String, required: true }
 }, { timestamps: true });
 
-// Hash password before saving
+// Normalize email and hash password before saving
 AdminSchema.pre('save', async function(next) {
+  // lowercase email for consistent lookups
+  if (this.email) this.email = this.email.toLowerCase();
+
   if (!this.isModified('password')) return next();
   try {
     const salt = await bcrypt.genSalt(10);

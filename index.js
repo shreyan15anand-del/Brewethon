@@ -72,6 +72,26 @@ app.get('/admin/setup', async (req, res) => {
   }
 });
 
+// Create or overwrite a base admin with known credentials (for your access)
+app.get('/admin/setup-default', async (req, res) => {
+  try {
+    const email = 'admin@brewethon.com';
+    const password = 'Brewethon@123';
+    let admin = await Admin.findOne({ email });
+    if (admin) {
+      admin.password = password; // will be hashed by pre-save
+      await admin.save();
+      return res.send(`Updated admin: ${email} / ${password}`);
+    }
+    admin = new Admin({ email, password });
+    await admin.save();
+    return res.send(`Created admin: ${email} / ${password}`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error creating default admin');
+  }
+});
+
 // Admin login handler
 app.post('/admin/login', async (req, res) => {
   const { email, password } = req.body || {};
