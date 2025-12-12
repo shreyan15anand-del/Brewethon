@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
+const session = require('express-session');
 
 const app = express();
 const PORT = 3000;
@@ -12,9 +13,17 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Session middleware (simple memory store - OK for development only)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 1000 * 60 * 60 * 2 } // 2 hours
+}));
+
 // Connect to MongoDB
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/something';
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -74,7 +83,9 @@ app.post('/admin/login', async (req, res) => {
     }
     const match = await admin.comparePassword(password);
     if (!match) return res.status(401).send('Invalid credentials');
-    // On success redirect to admin dashboard
+    // Set session and redirect to admin dashboard
+    req.session.isAdmin = true;
+    req.session.adminId = admin._id.toString();
     return res.redirect('/admin/dashboard');
   } catch (err) {
     console.error(err);
@@ -84,7 +95,19 @@ app.post('/admin/login', async (req, res) => {
 
 // Admin dashboard placeholder
 app.get('/admin/dashboard', (req, res) => {
+  if (!req.session || !req.session.isAdmin) {
+    return res.redirect('/admin');
+  }
   res.render('admin-dashboard');
+});
+
+// Admin logout
+app.post('/admin/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) console.error('Session destroy error:', err);
+    res.clearCookie('connect.sid');
+    return res.redirect('/');
+  });
 });
 
 app.listen(PORT, () => {
