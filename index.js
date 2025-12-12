@@ -14,6 +14,10 @@ app.get('/', (req, res) => {
   res.render('home');
 });
 
+app.get('/signup', (req, res) => {
+  res.render('role-selection');
+});
+
 app.get('/teacher', (req, res) => {
   res.render('teacherlogin', { userRole: 'Teacher' });
 });
@@ -28,6 +32,10 @@ app.get('/college', (req, res) => {
 
 app.get('/club-rep', (req, res) => {
   res.render('clubreplogin', { userRole: 'Club Representative' });
+});
+
+app.get('/admin', (req, res) => {
+  res.render('adminlogin', { userRole: 'Admin' });
 });
 
 app.listen(PORT, () => {
