@@ -3,44 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard</title>
+  <title>Admin Login</title>
+
   <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Admin Dashboard</h1>
-      <p>Manage the platform</p>
-    </div>
+  <div class="bg-animation"></div>
 
-    <div class="content">
-      <h2 class="section-title">Welcome, Admin!</h2>
+  <div class="login-wrapper fade-in">
+    <h1 class="login-title">Admin Access</h1>
+    <p class="login-subtitle">Restricted Area</p>
 
-      <div style="text-align: center; color: #666; font-size: 1.1em; margin: 40px 0;">
-        <p>You are logged in as: <strong>Admin</strong></p>
-        <p style="margin-top: 20px; color: #999;">Admin dashboard and management tools will be displayed here.</p>
-      </div>
+    <form action="/admin/login" method="POST" class="login-form">
 
-      <div style="text-align: center; margin-top: 40px;">
-        <a href="/" style="display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.3s ease;" onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">
-          ← Back to Home
-        </a>
-      </div>
+      <label>Email</label>
+      <input type="email" name="email" placeholder="Enter admin email" required>
 
-      <div class="features">
-        <h3>Admin Features</h3>
-        <ul>
-          <li>Manage users</li>
-          <li>View platform statistics</li>
-          <li>Control system settings</li>
-          <li>Monitor activities</li>
-          <li>Generate reports</li>
-          <li>Manage content</li>
-        </ul>
-      </div>
-    </div>
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" required>
+
+      <button class="login-btn">Login</button>
+
+      <p class="login-footer">
+        <a href="/">← Back to Home</a>
+      </p>
+    </form>
   </div>
-
-  <script src="/js/script.js"></script>
 </body>
 </html>

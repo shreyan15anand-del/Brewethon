@@ -1,0 +1,49 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Inter", "Segoe UI", sans-serif;
+    background: #212529;
+    color: #E9ECEF;
+    overflow-x: hidden;
+}
+
+/* ANIMATED BACKGROUND */
+.bg-animation {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle at 20% 20%, #343A40 0%, transparent 60%),
+                radial-gradient(circle at 80% 70%, #495057 0%, transparent 60%);
+    animation: bgMove 12s infinite alternate ease-in-out;
+}
+
+@keyframes bgMove {
+    from { background-position: 20% 20%, 80% 70%; }
+    to { background-position: 35% 45%, 65% 90%; }
+}
+
+/* WRAPPER */
+.page-wrapper {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+/* FADE-IN */
+.fade-in {
+    opacity: 0;
+    transform: translateY(25px);
+    animation: fadeUp 0.8s ease forwards;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

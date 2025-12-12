@@ -1,0 +1,51 @@
+/* LANDING PAGE (HOME) */
+
+.home-hero {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.home-hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #F8F9FA;
+}
+
+.home-hero p {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    color: #ADB5BD;
+}
+
+.home-action {
+    text-align: center;
+    margin-top: 90px;
+}
+
+.home-action h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #E9ECEF;
+    margin-bottom: 35px;
+}
+
+.signup-btn {
+    display: inline-block;
+    padding: 15px 45px;
+    font-size: 1.2rem;
+    background: #495057;
+    color: #F8F9FA;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: 0.3s ease;
+}
+
+.signup-btn:hover {
+    background: #6C757D;
+}
+
+.subtext {
+    margin-top: 25px;
+    color: #CED4DA;
+    font-size: 1rem;
+}

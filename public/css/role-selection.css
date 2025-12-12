@@ -1,0 +1,82 @@
+/* ROLE SELECTION PAGE */
+
+.role-hero {
+    text-align: center;
+    margin-top: 80px;
+    margin-bottom: 40px;
+}
+
+.role-hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #F8F9FA;
+}
+
+.role-hero p {
+    font-size: 1.15rem;
+    color: #ADB5BD;
+    margin-top: 10px;
+}
+
+.role-select h2 {
+    text-align: center;
+    font-size: 1.8rem;
+    color: #E9ECEF;
+    margin-bottom: 30px;
+}
+
+/* VERTICAL LIST OF ROLES */
+.role-list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgba(248,249,250,0.08);
+}
+
+.role-item {
+    padding: 30px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 1.3rem;
+    color: #DEE2E6;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(248,249,250,0.08);
+    transition: 0.3s ease;
+}
+
+.role-item:hover {
+    color: #F8F9FA;
+    border-bottom-color: rgba(248,249,250,0.25);
+}
+
+.role-item .emoji {
+    font-size: 2rem;
+    opacity: 0.9;
+}
+
+/* BACK BUTTON */
+.back-btn-wrap {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.back-btn {
+    color: #CED4DA;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s ease;
+}
+
+.back-btn:hover {
+    color: #F8F9FA;
+}
+
+/* MOBILE */
+@media (max-width: 500px) {
+    .role-hero h1 {
+        font-size: 2.4rem;
+    }
+    .role-item {
+        font-size: 1.15rem;
+    }
+}
